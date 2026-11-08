@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A bouquet of lilies for you</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Quicksand:wght@400;500;600&display=swap');
+
+:root {
+  --bg1: #fff6f0;
+  --bg2: #f4dce8;
+  --pink: #c96b86;
+  --pink-dark: #a84f6e;
+  --ink: #4a3140;
+  --green-dark: #315842;
+  --paper: #fffdf8;
+  --line: #f2e6d8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  font-family: Quicksand, sans-serif;
+  color: var(--ink);
+  background: radial-gradient(ellipse at 50% 14%, var(--bg2), var(--bg1) 66%);
+  overflow-x: hidden;
+}
+
+body {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 4vh 5vw;
+}
+
+.scene {
+  width: min(94vw, 540px);
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#fireworks {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Falling lily petals */
+.ambient {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.petal {
+  position: absolute;
+  top: -7vh;
+  width: 18px;
+  height: 30px;
+  background: linear-gradient(135deg, #fff 0%, #ffe4ee 55%, #eea7bf 100%);
+  border-radius: 78% 22% 74% 26% / 68% 30% 70% 32%;
+  box-shadow: inset -2px -3px 4px #d98ba8a8;
+  opacity: 0;
+  animation: fall linear forwards;
+  will-change: transform;
+}
+
+.petal::after {
+  content: '';
+  position: absolute;
+  width: 1px;
+  height: 23px;
+  left: 8px;
+  top: 3px;
+  background: #e7abc080;
+  transform: rotate(-18deg);
+}
+
+@keyframes fall {
+  0% {
+    transform: translate3d(0, -5vh, 0) rotate(0);
+    opacity: 0;
+  }
+
+  8% {
+    opacity: .82;
+  }
+
+  50% {
+    transform: translate3d(var(--drift), 50vh, 0) rotate(180deg);
+  }
+
+  100% {
+    transform: translate3d(calc(var(--drift) * -.6), 112vh, 0) rotate(400deg);
+    opacity: 0;
+  }
+}
+
+/* Envelope */
+.envelope-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  transition: opacity .4s;
+}
+
+.envelope-button,
+.restart {
+  all: unset;
+  cursor: pointer;
+}
+
+.envelope-button {
+  perspective: 900px;
+}
+
+.envelope {
+  width: 300px;
+  height: 200px;
+  position: relative;
+  transition: transform .6s cubic-bezier(.34,1.56,.64,1), opacity .5s;
+}
+
+.envelope-body {
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  background: linear-gradient(160deg, #d9869b, var(--pink-dark));
+  box-shadow: 0 26px 44px -18px #a64d696e;
+}
+
+.envelope-body::before,
+.envelope-body::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  border-style: solid;
+  opacity: .18;
+}
+
+.envelope-body::before {
+  left: 0;
+  border-width: 200px 0 0 150px;
+  border-color: transparent transparent transparent #401425;
+}
+
+.envelope-body::after {
+  right: 0;
+  border-width: 0 0 200px 150px;
+  border-color: transparent transparent #401425 transparent;
+}
+
+.envelope-flap {
+  position: absolute;
+  top: 0;
+  border-style: solid;
+  border-width: 106px 150px 0;
+  border-color: var(--pink-dark) transparent transparent;
+  transform-origin: top center;
+  transition: transform .7s cubic-bezier(.6,.05,.3,1);
+  filter: drop-shadow(0 6px 10px #74304440);
+}
+
+.seal {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  top: 95px;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #d9a441;
+  color: #fff6e2;
+  font-size: 22px;
+  box-shadow: 0 4px 9px #0003, inset 0 0 0 3px #ffffff29;
+  transition: transform .4s, opacity .4s;
+}
+
+.envelope-label {
+  position: absolute;
+  z-index: 1;
+  left: 32px;
+  bottom: 22px;
+  color: #fffdf0df;
+  font: 30px Caveat, cursive;
+}
+
+.hint {
+  margin: 0;
+  color: var(--pink-dark);
+  font-size: 14px;
+}
+
+.scene.open .envelope-flap {
+  transform: rotateX(180deg);
+}
+
+.scene.open .seal {
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+}
+
+.scene.open .envelope {
+  animation: away .55s .35s forwards;
+}
+
+.scene.open .hint {
+  opacity: 0;
+}
+
+.scene.open .envelope-wrap {
+  pointer-events: none;
+}
+
+@keyframes away {
+  to {
+    transform: translateY(-30px) scale(.75);
+    opacity: 0;
+  }
+}
+
+/* Lily bouquet */
+.bouquet {
+  display: none;
+  width: min(100%, 540px);
+  margin-top: -90px;
+  position: relative;
+}
+
+.scene.open .bouquet {
+  display: block;
+}
+
+.bouquet svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+.stem {
+  fill: none;
+  stroke: var(--green-dark);
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.scene.open .stem {
+  animation: draw 1s ease forwards;
+}
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.leaf {
+  opacity: 0;
+  transform: scale(.4);
+  transform-box: fill-box;
+  transform-origin: bottom center;
+}
+
+.scene.open .leaf {
+  animation: grow .6s ease forwards;
+}
+
+@keyframes grow {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Direct flower elements — this prevents empty stems */
+.flower {
+  opacity: 0;
+  transform: scale(0) rotate(-18deg);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.scene.open .flower {
+  animation: bloom .72s var(--delay, 0s) cubic-bezier(.3,1.55,.5,1) forwards;
+}
+
+@keyframes bloom {
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+}
+
+.ribbon {
+  opacity: 0;
+  transform: scale(.6);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.scene.open .ribbon {
+  animation: pop .6s .9s cubic-bezier(.34,1.56,.64,1) forwards;
+}
+
+@keyframes pop {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.scene.settled .bouquet {
+  animation: sway 5s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+@keyframes sway {
+  50% {
+    transform: rotate(.7deg);
+  }
+}
+
+/* Letter */
+.letter {
+  display: none;
+  width: min(90vw, 500px);
+  margin-top: 8px;
+  opacity: 0;
+  transform: translateY(60px) rotate(-2deg);
+}
+
+.scene.open .letter {
+  display: block;
+  animation: rise .9s 3.1s cubic-bezier(.25,1.4,.4,1) forwards;
+}
+
+@keyframes rise {
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(-1.2deg);
+  }
+}
+
+.letter-card {
+  position: relative;
+  border-radius: 3px;
+  padding: 26px 24px 22px;
+  background: repeating-linear-gradient(var(--paper) 0 27px, var(--line) 28px);
+  box-shadow: 0 20px 34px -18px #783c4666, 0 2px 4px #0000000d;
+}
+
+.letter-card::before,
+.letter-card::after {
+  content: '';
+  position: absolute;
+  top: -8px;
+  width: 44px;
+  height: 16px;
+  background: #e9b4968c;
+}
+
+.letter-card::before {
+  left: 20px;
+  transform: rotate(-6deg);
+}
+
+.letter-card::after {
+  right: 24px;
+  transform: rotate(5deg);
+}
+
+.letter-heading {
+  font: italic 22px 'Cormorant Garamond', serif;
+  margin: 0 0 10px;
+  color: var(--pink-dark);
+}
+
+.letter-body {
+  font: 18px/1.55 'Cormorant Garamond', serif;
+  white-space: pre-line;
+  margin: 0 0 14px;
+}
+
+.letter-sign {
+  margin: 0;
+  text-align: right;
+  font: 24px Caveat, cursive;
+  color: var(--pink-dark);
+}
+
+.restart {
+  opacity: 0;
+  margin-top: 22px;
+  padding: 6px 14px;
+  border: 1px solid #c96b7880;
+  border-radius: 999px;
+  color: var(--pink-dark);
+  font-size: 13px;
+  transition: opacity .4s, background .2s;
+}
+
+.restart:hover {
+  background: #e088931a;
+}
+
+.scene.settled .restart {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: .01ms !important;
+    animation-delay: 0s !important;
+    transition-duration: .01ms !important;
+  }
+}
+</style>
+</head>
+
+<body>
+<canvas id="fireworks" aria-hidden="true"></canvas>
+<div class="ambient" id="ambient" aria-hidden="true"></div>
+
+<main class="scene" id="scene">
+  <div class="envelope-wrap">
+    <button class="envelope-button" id="envelopeBtn" aria-label="Open the envelope to reveal your lily bouquet">
+      <div class="envelope">
+        <div class="envelope-body"></div>
+        <div class="envelope-label">for you</div>
+        <div class="seal">♥</div>
+        <div class="envelope-flap"></div>
+      </div>
+    </button>
+
+    <p class="hint">tap the envelope to open it</p>
+  </div>
+
+  <div class="bouquet" aria-label="A large bouquet of pink and white lilies">
+    <svg viewBox="0 0 540 455" xmlns="http://www.w3.org/2000/svg" role="img">
+      <defs>
+        <linearGradient id="pinkPetal" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#fff8fb"/>
+          <stop offset=".36" stop-color="#f9aac4"/>
+          <stop offset=".72" stop-color="#ef5f91"/>
+          <stop offset="1" stop-color="#b92f66"/>
+        </linearGradient>
+
+        <linearGradient id="whitePetal" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#ffffff"/>
+          <stop offset=".5" stop-color="#fff9fb"/>
+          <stop offset="1" stop-color="#f2b8cd"/>
+        </linearGradient>
+      </defs>
+
+      <g fill="#6f9b70">
+        <path class="leaf" d="M270 426C219 354 152 338 95 330c65 27 116 60 167 88z"/>
+        <path class="leaf" d="M270 426c51-72 118-88 175-96-65 27-116 60-167 88z"/>
+        <path class="leaf" d="M265 423c-43-75-101-116-130-160 49 31 88 77 137 144z"/>
+        <path class="leaf" d="M275 423c43-75 101-116 130-160-49 31-88 77-137 144z"/>
+        <path class="leaf" d="M264 424c-64-41-123-42-177-27 65 4 117 18 173 38z"/>
+        <path class="leaf" d="M276 424c64-41 123-42 177-27-65 4-117 18-173 38z"/>
+      </g>
+
+      <g class="stems">
+        <path class="stem" pathLength="1" d="M270 430C220 326 158 260 108 208"/>
+        <path class="stem" pathLength="1" style="animation-delay:.06s" d="M270 430C230 312 200 205 180 144"/>
+        <path class="stem" pathLength="1" style="animation-delay:.12s" d="M270 430C255 302 248 170 250 92"/>
+        <path class="stem" pathLength="1" style="animation-delay:.18s" d="M270 430C280 304 293 176 303 102"/>
+        <path class="stem" pathLength="1" style="animation-delay:.24s" d="M270 430C308 317 347 243 402 190"/>
+        <path class="stem" pathLength="1" style="animation-delay:.3s" d="M270 430C239 344 194 286 148 248"/>
+        <path class="stem" pathLength="1" style="animation-delay:.36s" d="M270 430C301 342 350 283 394 244"/>
+        <path class="stem" pathLength="1" style="animation-delay:.42s" d="M270 430C246 350 226 270 224 212"/>
+        <path class="stem" pathLength="1" style="animation-delay:.48s" d="M270 430C295 350 316 270 321 210"/>
+        <path class="stem" pathLength="1" style="animation-delay:.54s" d="M270 430C265 348 270 277 272 174"/>
+        <path class="stem" pathLength="1" style="animation-delay:.6s" d="M270 430C213 350 151 318 98 295"/>
+        <path class="stem" pathLength="1" style="animation-delay:.66s" d="M270 430C327 350 389 318 442 295"/>
+      </g>
+
+      <g id="flowerLayer"></g>
+
+      <g class="ribbon" transform="translate(270 421)">
+        <path d="M0 0C-40-15-65 9-56 30c9 20 43 7 56-18z" fill="#b85072"/>
+        <path d="M0 0C40-15 65 9 56 30-9 20-43 7-56-18z" fill="#df89a2"/>
+        <circle r="14" fill="#9d3e60"/>
+        <path d="M-7 11l-23 57 22-13z" fill="#b85072"/>
+        <path d="M7 11l23 57-22-13z" fill="#df89a2"/>
+      </g>
+    </svg>
+  </div>
+
+  <section class="letter">
+    <div class="letter-card">
+      <p class="letter-heading">A little letter for you, Y/N,</p>
+          Ano ngalan mo man? Asta subong wala ko japon kabalo. But Anyw, kani kay gin himo ni nako kay gusto q
+          Stay strong bayet 💕. WAHAHAHAHHA bayet bayet bayet bayet bayet bayet bayet. May pa fireworks pa oh, kag color pink 🩷
+      <p class="letter-body"> ❤️</p>
+      <p class="letter-sign">with love, Jubby</p>
+    </div>
+  </section>
+
+  <button class="restart" id="restartBtn" type="button">start over</button>
+</main>
+
+<script>
+const canvas = document.getElementById('fireworks');
+const ctx = canvas.getContext('2d');
+
+const scene = document.getElementById('scene');
+const button = document.getElementById('envelopeBtn');
+const restart = document.getElementById('restartBtn');
+const ambient = document.getElementById('ambient');
+const flowerLayer = document.getElementById('flowerLayer');
+
+const SVG = 'http://www.w3.org/2000/svg';
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+let interval;
+let settle;
+let fireworksTimer;
+let fireworksRunning = false;
+let rockets = [];
+let sparks = [];
+
+const flowerData = [
+  [108, 208, -25, .9, 'pink', .38],
+  [180, 144, -13, 1.05, 'white', .48],
+  [250, 92, 0, 1.18, 'pink', .58],
+  [303, 102, 11, 1.12, 'white', .68],
+  [402, 190, 25, .95, 'pink', .78],
+  [148, 248, -28, .94, 'white', .88],
+  [394, 244, 29, .94, 'pink', .98],
+  [224, 212, -9, .92, 'white', 1.08],
+  [321, 210, 10, .92, 'pink', 1.18],
+  [272, 174, 0, 1.08, 'pink', 1.28],
+  [98, 295, -37, .86, 'white', 1.38],
+  [442, 295, 38, .86, 'pink', 1.48]
+];
+
+const petalPath = 'M0,0 C-34,-10 -57,-43 -41,-72 C-13,-68 -3,-30 0,-2';
+
+function addLily([x, y, angle, size, color, delay]) {
+  const outer = document.createElementNS(SVG, 'g');
+  const flower = document.createElementNS(SVG, 'g');
+
+  outer.setAttribute(
+    'transform',
+    `translate(${x} ${y}) rotate(${angle}) scale(${size})`
+  );
+
+  flower.setAttribute('class', 'flower');
+  flower.style.setProperty('--delay', `${delay}s`);
+
+  const fill = color === 'pink'
+    ? 'url(#pinkPetal)'
+    : 'url(#whitePetal)';
+
+  flower.innerHTML = `
+    <g fill="${fill}" stroke="#e88bab" stroke-width="1.2">
+      <path d="${petalPath}"/>
+      <path d="${petalPath}" transform="scale(-1 1)"/>
+      <path d="${petalPath}" transform="rotate(58)"/>
+      <path d="${petalPath}" transform="rotate(118)"/>
+      <path d="${petalPath}" transform="rotate(180)"/>
+      <path d="${petalPath}" transform="rotate(240)"/>
+    </g>
+
+    <g fill="#8c254e" opacity=".8">
+      <circle cx="-13" cy="-30" r="2.1"/>
+      <circle cx="13" cy="-30" r="2.1"/>
+      <circle cx="-7" cy="-43" r="1.8"/>
+      <circle cx="7" cy="-43" r="1.8"/>
+      <circle cx="-20" cy="-19" r="1.6"/>
+      <circle cx="20" cy="-19" r="1.6"/>
+    </g>
+
+    <g stroke="#9b6e38" stroke-width="2.1" stroke-linecap="round">
+      <path d="M0,-1 L-17,-43"/>
+      <path d="M0,-1 L0,-51"/>
+      <path d="M0,-1 L17,-43"/>
+    </g>
+
+    <g fill="#c98c37">
+      <ellipse cx="-17" cy="-44" rx="3.2" ry="6" transform="rotate(-25 -17 -44)"/>
+      <ellipse cx="0" cy="-52" rx="3.2" ry="6"/>
+      <ellipse cx="17" cy="-44" rx="3.2" ry="6" transform="rotate(25 17 -44)"/>
+    </g>
+  `;
+
+  outer.appendChild(flower);
+  flowerLayer.appendChild(outer);
+}
+
+flowerData.forEach(addLily);
+
+/* Fireworks */
+const FIREWORK_COLORS = ['#fff7d6', '#f2a6bd', '#d7799c', '#c9a0dc', '#f6d78c'];
+
+function sizeCanvas() {
+  canvas.width = innerWidth;
+  canvas.height = innerHeight;
+}
+
+sizeCanvas();
+addEventListener('resize', sizeCanvas);
+
+class Rocket {
+  constructor() {
+    this.x = innerWidth * (.12 + Math.random() * .76);
+    this.y = innerHeight + 14;
+    this.targetY = innerHeight * (.1 + Math.random() * .3);
+    this.vy = -(9 + Math.random() * 3);
+    this.color = FIREWORK_COLORS[Math.floor(Math.random() * FIREWORK_COLORS.length)];
+    this.trail = [];
+  }
+
+  update() {
+    this.trail.push({ x: this.x, y: this.y });
+
+    if (this.trail.length > 10) {
+      this.trail.shift();
+    }
+
+    this.y += this.vy;
+    return this.y <= this.targetY;
+  }
+
+  draw() {
+    ctx.strokeStyle = this.color;
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = this.color;
+
+    ctx.beginPath();
+
+    this.trail.forEach((point, index) => {
+      if (index) {
+        ctx.lineTo(point.x, point.y);
+      } else {
+        ctx.moveTo(point.x, point.y);
+      }
+    });
+
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+}
+
+class Spark {
+  constructor(x, y, color) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 2.8 + Math.random() * 5.5;
+
+    this.x = x;
+    this.y = y;
+    this.vx = Math.cos(angle) * speed;
+    this.vy = Math.sin(angle) * speed;
+    this.color = color;
+    this.alpha = 1;
+    this.size = 2 + Math.random() * 3;
+  }
+
+  update() {
+    this.vy += .05;
+    this.vx *= .98;
+    this.vy *= .98;
+    this.x += this.vx;
+    this.y += this.vy;
+    this.alpha -= .012;
+
+    return this.alpha > 0;
+  }
+
+  draw() {
+    ctx.globalAlpha = Math.max(this.alpha, 0);
+    ctx.fillStyle = this.color;
+    ctx.shadowBlur = 14;
+    ctx.shadowColor = this.color;
+
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 1;
+  }
+}
+
+function explode(x, y, color) {
+  for (let i = 0; i < 90; i++) {
+    sparks.push(new Spark(x, y, color));
+  }
+}
+
+function tick() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  rockets = rockets.filter(rocket => {
+    const arrived = rocket.update();
+    rocket.draw();
+
+    if (arrived) {
+      explode(rocket.x, rocket.y, rocket.color);
+    }
+
+    return !arrived;
+  });
+
+  sparks = sparks.filter(spark => {
+    const alive = spark.update();
+
+    if (alive) {
+      spark.draw();
+    }
+
+    return alive;
+  });
+
+  if (rockets.length || sparks.length) {
+    requestAnimationFrame(tick);
+  } else {
+    fireworksRunning = false;
+  }
+}
+
+function launch() {
+  if (reduced) return;
+
+  rockets.push(new Rocket());
+
+  if (!fireworksRunning) {
+    fireworksRunning = true;
+    requestAnimationFrame(tick);
+  }
+}
+
+function fireworks() {
+  [100, 400, 750, 1150, 1550, 2050].forEach(delay => {
+    setTimeout(launch, delay);
+  });
+}
+
+function clearFireworks() {
+  clearInterval(fireworksTimer);
+  rockets = [];
+  sparks = [];
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+/* Lily petals */
+function petals(count, burst = false) {
+  for (let i = 0; i < count; i++) {
+    const petal = document.createElement('i');
+
+    petal.className = 'petal';
+    petal.style.left = Math.random() * 100 + 'vw';
+    petal.style.setProperty('--drift', (Math.random() * 110 - 55) + 'px');
+    petal.style.animationDuration = (burst ? 5 + Math.random() * 3 : 8 + Math.random() * 5) + 's';
+    petal.style.animationDelay = (burst ? Math.random() * 1.1 : Math.random() * 2) + 's';
+    petal.style.transform = `scale(${.6 + Math.random() * .75})`;
+
+    petal.addEventListener('animationend', () => petal.remove());
+    ambient.appendChild(petal);
+  }
+}
+
+/* Open and reset */
+function open() {
+  if (scene.classList.contains('open')) return;
+
+  scene.classList.add('open');
+  button.setAttribute('aria-expanded', 'true');
+
+  if (!reduced) {
+    petals(30, true);
+    fireworks();
+  }
+
+  settle = setTimeout(() => {
+    scene.classList.add('settled');
+
+    if (!reduced) {
+      interval = setInterval(() => petals(3), 700);
+      fireworksTimer = setInterval(launch, 2500);
+    }
+  }, 4100);
+}
+
+function reset() {
+  clearTimeout(settle);
+  clearInterval(interval);
+  clearFireworks();
+
+  ambient.innerHTML = '';
+  scene.classList.remove('open', 'settled');
+  button.setAttribute('aria-expanded', 'false');
+
+  void scene.offsetWidth;
+}
+
+button.addEventListener('click', open);
+
+button.addEventListener('keydown', event => {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    open();
+  }
+});
+
+restart.addEventListener('click', reset);
+</script>
+</body>
+</html>

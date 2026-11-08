@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A little something for you</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Quicksand:wght@400;500;600&family=Caveat:wght@500;600&display=swap');
+
+  :root{
+    --blush-bg-1: #fdf1ee;
+    --blush-bg-2: #f7dfe2;
+    --rose: #e08893;
+    --rose-dark: #c96b78;
+    --seal-gold: #d9a441;
+    --paper: #fffaf3;
+    --paper-line: #f0e2cf;
+    --ink: #4a3140;
+    --sage: #6f8f63;
+    --sage-dark: #52704a;
+    --ribbon: #c96b78;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html, body{
+    margin:0;
+    min-height:100vh;
+    background: radial-gradient(ellipse at 50% 20%, var(--blush-bg-2), var(--blush-bg-1) 65%);
+    font-family: 'Quicksand', sans-serif;
+    color: var(--ink);
+    overflow-x:hidden;
+  }
+
+  body{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 4vh 5vw;
+  }
+
+  #fireworks{
+    position:fixed;
+    inset:0;
+    z-index:0;
+    pointer-events:none;
+  }
+
+  .scene{
+    position:relative;
+    z-index:2;
+    width: min(92vw, 460px);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+
+  /* ---------- floating ambient petals ---------- */
+  .ambient{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    overflow:hidden;
+    z-index:1;
+  }
+  .ambient span{
+    position:absolute;
+    top:-40px;
+    font-size: 14px;
+    opacity:0.7;
+    animation: drift linear forwards;
+    will-change: transform;
+  }
+  @keyframes drift{
+    0%{ transform: translateY(-5vh) translateX(0) rotate(0deg); opacity:0; }
+    8%{ opacity:.85; }
+    50%{ transform: translateY(55vh) translateX(var(--drift-x, 20px)) rotate(180deg); }
+    90%{ opacity:.7; }
+    100%{ transform: translateY(115vh) translateX(calc(var(--drift-x, 20px) * -1)) rotate(340deg); opacity:0; }
+  }
+
+  /* ---------- envelope ---------- */
+  .envelope-wrap{
+    position:relative;
+    z-index:2;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap: 18px;
+    transition: opacity .5s ease;
+  }
+
+  .envelope-button{
+    all: unset;
+    cursor:pointer;
+    perspective: 900px;
+  }
+
+  .envelope{
+    position:relative;
+    width: 300px;
+    height: 200px;
+    transition: transform .6s cubic-bezier(.34,1.56,.64,1), opacity .5s ease;
+  }
+
+  .envelope-body{
+    position:absolute;
+    inset:0;
+    background: linear-gradient(160deg, var(--rose), var(--rose-dark));
+    border-radius: 8px;
+    box-shadow: 0 26px 44px -18px rgba(180,80,95,0.55);
+  }
+
+  .envelope-crease-left,
+  .envelope-crease-right{
+    position:absolute;
+    bottom:0;
+    width:0; height:0;
+    border-style:solid;
+    opacity:.9;
+  }
+  .envelope-crease-left{
+    left:0;
+    border-width: 200px 0 0 150px;
+    border-color: transparent transparent transparent rgba(0,0,0,0.06);
+  }
+  .envelope-crease-right{
+    right:0;
+    border-width: 0 0 200px 150px;
+    border-color: transparent transparent rgba(0,0,0,0.06) transparent;
+  }
+
+  .envelope-flap{
+    position:absolute;
+    top:0; left:0;
+    width:0; height:0;
+    border-style:solid;
+    border-width: 106px 150px 0 150px;
+    border-color: var(--rose-dark) transparent transparent transparent;
+    transform-origin: top center;
+    transform: rotateX(0deg);
+    transition: transform .7s cubic-bezier(.6,.05,.3,1);
+    filter: drop-shadow(0 6px 10px rgba(150,60,75,0.25));
+    z-index:3;
+  }
+
+  .scene.open .envelope-flap{
+    transform: rotateX(180deg);
+  }
+
+  .seal{
+    position:absolute;
+    left:50%; top:95px;
+    transform: translate(-50%, -50%);
+    width: 48px; height:48px;
+    border-radius:50%;
+    background: var(--seal-gold);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#fff6e2;
+    font-size:22px;
+    box-shadow: 0 4px 9px rgba(0,0,0,0.2), inset 0 0 0 3px rgba(255,255,255,0.15);
+    z-index:4;
+    transition: transform .4s ease, opacity .4s ease;
+  }
+  .scene.open .seal{
+    transform: translate(-50%, -50%) scale(0);
+    opacity:0;
+  }
+
+  .envelope-label{
+    position:absolute;
+    left:32px; bottom:22px;
+    font-family:'Caveat', cursive;
+    font-size: 30px;
+    color: rgba(255,255,255,0.85);
+    z-index:2;
+  }
+
+  .scene.open .envelope{
+    animation: envelopeAway .55s ease forwards;
+    animation-delay: .35s;
+  }
+  @keyframes envelopeAway{
+    to{ transform: translateY(-30px) scale(.75); opacity:0; }
+  }
+
+  .hint{
+    margin:0;
+    font-size: 14px;
+    letter-spacing:.02em;
+    color: var(--rose-dark);
+    opacity:.85;
+  }
+  .scene.open .hint{ opacity:0; transition: opacity .3s ease; }
+
+  /* ---------- bouquet ---------- */
+  .bouquet{
+    position:relative;
+    z-index:1;
+    width: min(94vw, 480px);
+    margin-top: -90px;
+    display:none;
+  }
+  .scene.open .bouquet{ display:block; }
+  .bouquet svg{ width:100%; height:auto; display:block; overflow:visible; }
+
+  .stem-line{
+    fill:none;
+    stroke: var(--sage-dark);
+    stroke-width:5;
+    stroke-linecap:round;
+    stroke-dasharray:1;
+    stroke-dashoffset:1;
+  }
+  .scene.open .stem-line{
+    animation: drawStem 1s ease forwards;
+  }
+  @keyframes drawStem{ to{ stroke-dashoffset:0; } }
+
+  .leaf{
+    opacity:0;
+    transform: scale(.4);
+    transform-box: fill-box;
+    transform-origin: bottom center;
+  }
+  .scene.open .leaf{
+    animation: leafGrow .6s ease forwards;
+  }
+  @keyframes leafGrow{ to{ opacity:1; transform:scale(1); } }
+
+  .ribbon-group{
+    opacity:0;
+    transform: scale(.6);
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  .scene.open .ribbon-group{
+    animation: ribbonPop .6s cubic-bezier(.34,1.56,.64,1) forwards;
+    animation-delay: .8s;
+  }
+  @keyframes ribbonPop{ to{ opacity:1; transform:scale(1); } }
+
+  .flower-inner{
+    opacity:0;
+    transform: scale(0) rotate(-25deg);
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  .scene.open .flower-inner{
+    animation: bloom .75s cubic-bezier(.3,1.6,.5,1) forwards;
+  }
+  @keyframes bloom{ to{ opacity:1; transform: scale(1) rotate(0deg); } }
+
+  .scene.settled .bouquet{
+    animation: sway 5s ease-in-out infinite;
+    transform-origin: bottom center;
+  }
+  @keyframes sway{
+    0%,100%{ transform: rotate(-0.6deg); }
+    50%{ transform: rotate(0.6deg); }
+  }
+
+  /* ---------- letter ---------- */
+  .letter{
+    position:relative;
+    z-index:1;
+    width: min(90vw, 460px);
+    margin-top: 8px;
+    opacity:0;
+    transform: translateY(60px) rotate(-2deg);
+    transition: none;
+    display:none;
+  }
+  .scene.open .letter{ display:block; }
+  .scene.open .letter{
+    animation: letterRise .9s cubic-bezier(.25,1.4,.4,1) forwards;
+    animation-delay: 2.7s;
+  }
+  @keyframes letterRise{
+    to{ opacity:1; transform: translateY(0) rotate(-1.2deg); }
+  }
+
+  .letter-card{
+    background: var(--paper);
+    background-image: repeating-linear-gradient(
+      var(--paper) 0px, var(--paper) 27px, var(--paper-line) 28px
+    );
+    border-radius: 3px;
+    padding: 26px 24px 22px;
+    box-shadow: 0 20px 34px -18px rgba(120,60,70,0.4), 0 2px 4px rgba(0,0,0,0.05);
+    position:relative;
+  }
+  .letter-card::before{
+    content:'';
+    position:absolute;
+    top:-8px; left: 20px;
+    width: 44px; height:16px;
+    background: rgba(233,180,150,0.55);
+    transform: rotate(-6deg);
+  }
+  .letter-card::after{
+    content:'';
+    position:absolute;
+    top:-8px; right: 24px;
+    width: 44px; height:16px;
+    background: rgba(233,180,150,0.55);
+    transform: rotate(5deg);
+  }
+
+  .letter-heading{
+    font-family:'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 22px;
+    margin: 0 0 10px;
+    color: var(--rose-dark);
+  }
+
+  .letter-body{
+    font-family:'Cormorant Garamond', serif;
+    font-size: 18px;
+    line-height:1.55;
+    margin: 0 0 14px;
+    color: var(--ink);
+  }
+
+  .letter-sign{
+    font-family:'Caveat', cursive;
+    font-size: 24px;
+    color: var(--rose-dark);
+    text-align:right;
+    margin:0;
+  }
+
+  /* ---------- restart ---------- */
+  .restart{
+    all:unset;
+    cursor:pointer;
+    margin-top: 22px;
+    font-family:'Quicksand', sans-serif;
+    font-size: 13px;
+    letter-spacing:.02em;
+    color: var(--rose-dark);
+    opacity:0;
+    padding: 6px 14px;
+    border: 1px solid rgba(201,107,120,0.4);
+    border-radius: 999px;
+    transition: opacity .4s ease, background .2s ease;
+  }
+  .restart:hover{ background: rgba(224,136,147,0.1); }
+  .scene.settled .restart{ opacity:1; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{
+      animation-duration: 0.01ms !important;
+      animation-delay: 0s !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="fireworks"></canvas>
+<div class="ambient" id="ambient" aria-hidden="true"></div>
+
+<div class="scene" id="scene">
+
+  <div class="envelope-wrap" id="envelopeWrap">
+    <button class="envelope-button" id="envelopeBtn" aria-label="Open the envelope to reveal your surprise">
+      <div class="envelope">
+        <div class="envelope-body"></div>
+        <div class="envelope-crease-left"></div>
+        <div class="envelope-crease-right"></div>
+        <div class="envelope-label">for you</div>
+        <div class="seal">&#10084;</div>
+        <div class="envelope-flap"></div>
+      </div>
+    </button>
+    <p class="hint">tap the envelope to open it</p>
+  </div>
+
+  <div class="bouquet" id="bouquet">
+    <svg viewBox="0 0 500 420" xmlns="http://www.w3.org/2000/svg">
+
+      <!-- leaves -->
+      <path class="leaf" d="M250,398 C222,330 190,300 140,278 C185,296 218,320 248,362 Z" fill="#7fa36b"/>
+      <path class="leaf" d="M250,398 C275,330 305,300 355,278 C312,296 280,322 250,362 Z" fill="#6f8f63"/>
+      <path class="leaf" d="M248,395 C238,350 210,325 175,315 C205,322 228,338 246,368 Z" fill="#8fb37c"/>
+      <path class="leaf" d="M252,395 C262,350 290,325 325,315 C295,322 272,338 254,368 Z" fill="#7fa36b"/>
+      <path class="leaf" d="M250,396 C215,345 165,320 110,305 C155,318 195,338 245,372 Z" fill="#6f8f63"/>
+      <path class="leaf" d="M250,396 C285,345 335,320 390,305 C345,318 305,338 255,372 Z" fill="#7fa36b"/>
+
+      <!-- stems -->
+      <path class="stem-line" pathLength="1" d="M250,398 C246,335 235,270 205,205"/>
+      <path class="stem-line" pathLength="1" d="M250,398 C251,330 253,260 250,180" style="animation-delay:.08s"/>
+      <path class="stem-line" pathLength="1" d="M250,398 C255,335 262,270 300,205" style="animation-delay:.16s"/>
+      <path class="stem-line" pathLength="1" d="M250,398 C247,340 240,285 178,240" style="animation-delay:.05s"/>
+      <path class="stem-line" pathLength="1" d="M250,398 C254,340 262,285 328,240" style="animation-delay:.12s"/>
+      <path class="stem-line" pathLength="1" d="M250,398 C235,345 185,315 140,270" style="animation-delay:.02s"/>
+      <path class="stem-line" pathLength="1" d="M250,398 C266,345 316,315 362,270" style="animation-delay:.2s"/>
+      <path class="stem-line" pathLength="1" d="M250,398 C245,320 233,220 225,155" style="animation-delay:.1s"/>
+      <path class="stem-line" pathLength="1" d="M250,398 C256,320 268,220 277,155" style="animation-delay:.14s"/>
+      <path class="stem-line" pathLength="1" d="M250,398 C249,310 245,200 250,130" style="animation-delay:.18s"/>
+      <path class="stem-line" pathLength="1" d="M250,398 C225,335 190,265 160,205" style="animation-delay:.22s"/>
+      <path class="stem-line" pathLength="1" d="M250,398 C275,335 310,265 340,205" style="animation-delay:.24s"/>
+      <path class="stem-line" pathLength="1" d="M250,398 C250,325 250,265 250,225" style="animation-delay:.06s"/>
+      <path class="stem-line" pathLength="1" d="M250,398 C235,330 210,235 190,175" style="animation-delay:.26s"/>
+      <path class="stem-line" pathLength="1" d="M250,398 C265,330 290,235 310,175" style="animation-delay:.28s"/>
+      <path class="stem-line" pathLength="1" d="M250,398 C248,320 250,200 250,100" style="animation-delay:.3s"/>
+      <path class="stem-line" pathLength="1" d="M250,398 C240,345 225,300 215,255" style="animation-delay:.09s"/>
+      <path class="stem-line" pathLength="1" d="M250,398 C260,345 275,300 285,255" style="animation-delay:.13s"/>
+      <path class="stem-line" pathLength="1" d="M250,398 C220,340 165,300 130,250" style="animation-delay:.17s"/>
+      <path class="stem-line" pathLength="1" d="M250,398 C280,340 335,300 370,250" style="animation-delay:.21s"/>
+
+      <!-- ribbon bow -->
+      <g class="ribbon-group" transform="translate(250,392)">
+        <path d="M0,0 C-35,-8 -55,10 -50,26 C-45,42 -15,34 0,10 Z" fill="#c96b78"/>
+        <path d="M0,0 C35,-8 55,10 50,26 C45,42 15,34 0,10 Z" fill="#d97e8b"/>
+        <circle cx="0" cy="4" r="13" fill="#b85c6a"/>
+        <path d="M-8,10 L-20,55 L-4,45 Z" fill="#c96b78"/>
+        <path d="M8,10 L20,55 L4,45 Z" fill="#d97e8b"/>
+      </g>
+
+      <!-- flower 1 : rose pink, top-left stem, delay 1.05s -->
+      <g transform="translate(205,205)">
+        <g class="flower-inner" style="animation-delay:1.05s">
+          <g fill="#f2a6b3">
+            <ellipse cx="0" cy="-22" rx="17" ry="32" transform="rotate(0)"/>
+            <ellipse cx="0" cy="-22" rx="17" ry="32" transform="rotate(60)"/>
+            <ellipse cx="0" cy="-22" rx="17" ry="32" transform="rotate(120)"/>
+            <ellipse cx="0" cy="-22" rx="17" ry="32" transform="rotate(180)"/>
+            <ellipse cx="0" cy="-22" rx="17" ry="32" transform="rotate(240)"/>
+            <ellipse cx="0" cy="-22" rx="17" ry="32" transform="rotate(300)"/>
+          </g>
+          <circle r="16" fill="#f6d3a6"/>
+        </g>
+      </g>
+
+      <!-- flower 2 : deep pink, center-top stem, delay 1.2s -->
+      <g transform="translate(250,180)">
+        <g class="flower-inner" style="animation-delay:1.2s">
+          <g fill="#e8748a">
+            <ellipse cx="0" cy="-25" rx="18" ry="35" transform="rotate(0)"/>
+            <ellipse cx="0" cy="-25" rx="18" ry="35" transform="rotate(60)"/>
+            <ellipse cx="0" cy="-25" rx="18" ry="35" transform="rotate(120)"/>
+            <ellipse cx="0" cy="-25" rx="18" ry="35" transform="rotate(180)"/>
+            <ellipse cx="0" cy="-25" rx="18" ry="35" transform="rotate(240)"/>
+            <ellipse cx="0" cy="-25" rx="18" ry="35" transform="rotate(300)"/>
+          </g>
+          <circle r="17" fill="#fff3d9"/>
+        </g>
+      </g>
+
+      <!-- flower 3 : lilac, top-right stem, delay 1.35s -->
+      <g transform="translate(300,205)">
+        <g class="flower-inner" style="animation-delay:1.35s">
+          <g fill="#c9a0dc">
+            <ellipse cx="0" cy="-22" rx="17" ry="32" transform="rotate(0)"/>
+            <ellipse cx="0" cy="-22" rx="17" ry="32" transform="rotate(60)"/>
+            <ellipse cx="0" cy="-22" rx="17" ry="32" transform="rotate(120)"/>
+            <ellipse cx="0" cy="-22" rx="17" ry="32" transform="rotate(180)"/>
+            <ellipse cx="0" cy="-22" rx="17" ry="32" transform="rotate(240)"/>
+            <ellipse cx="0" cy="-22" rx="17" ry="32" transform="rotate(300)"/>
+          </g>
+          <circle r="16" fill="#fff3d9"/>
+        </g>
+      </g>
+
+      <!-- flower 4 : cream daisy, left low stem, delay 1.5s -->
+      <g transform="translate(178,240)">
+        <g class="flower-inner" style="animation-delay:1.5s">
+          <g fill="#fffaf0">
+            <ellipse cx="0" cy="-17" rx="10" ry="23" transform="rotate(0)"/>
+            <ellipse cx="0" cy="-17" rx="10" ry="23" transform="rotate(45)"/>
+            <ellipse cx="0" cy="-17" rx="10" ry="23" transform="rotate(90)"/>
+            <ellipse cx="0" cy="-17" rx="10" ry="23" transform="rotate(135)"/>
+            <ellipse cx="0" cy="-17" rx="10" ry="23" transform="rotate(180)"/>
+            <ellipse cx="0" cy="-17" rx="10" ry="23" transform="rotate(225)"/>
+            <ellipse cx="0" cy="-17" rx="10" ry="23" transform="rotate(270)"/>
+            <ellipse cx="0" cy="-17" rx="10" ry="23" transform="rotate(315)"/>
+          </g>
+          <circle r="12" fill="#e9b64a"/>
+        </g>
+      </g>
+
+      <!-- flower 5 : coral, right low stem, delay 1.65s -->
+      <g transform="translate(328,240)">
+        <g class="flower-inner" style="animation-delay:1.65s">
+          <g fill="#f4b183">
+            <ellipse cx="0" cy="-17" rx="10" ry="23" transform="rotate(0)"/>
+            <ellipse cx="0" cy="-17" rx="10" ry="23" transform="rotate(45)"/>
+            <ellipse cx="0" cy="-17" rx="10" ry="23" transform="rotate(90)"/>
+            <ellipse cx="0" cy="-17" rx="10" ry="23" transform="rotate(135)"/>
+            <ellipse cx="0" cy="-17" rx="10" ry="23" transform="rotate(180)"/>
+            <ellipse cx="0" cy="-17" rx="10" ry="23" transform="rotate(225)"/>
+            <ellipse cx="0" cy="-17" rx="10" ry="23" transform="rotate(270)"/>
+            <ellipse cx="0" cy="-17" rx="10" ry="23" transform="rotate(315)"/>
+          </g>
+          <circle r="12" fill="#e9b64a"/>
+        </g>
+      </g>
+
+      <!-- flower 6 : magenta, outer far-left stem, delay 1.75s -->
+      <g transform="translate(140,270)">
+        <g class="flower-inner" style="animation-delay:1.75s">
+          <g fill="#d46a9e">
+            <ellipse cx="0" cy="-15" rx="10" ry="21" transform="rotate(0)"/>
+            <ellipse cx="0" cy="-15" rx="10" ry="21" transform="rotate(45)"/>
+            <ellipse cx="0" cy="-15" rx="10" ry="21" transform="rotate(90)"/>
+            <ellipse cx="0" cy="-15" rx="10" ry="21" transform="rotate(135)"/>
+            <ellipse cx="0" cy="-15" rx="10" ry="21" transform="rotate(180)"/>
+            <ellipse cx="0" cy="-15" rx="10" ry="21" transform="rotate(225)"/>
+            <ellipse cx="0" cy="-15" rx="10" ry="21" transform="rotate(270)"/>
+            <ellipse cx="0" cy="-15" rx="10" ry="21" transform="rotate(315)"/>
+          </g>
+          <circle r="9" fill="#fff3d9"/>
+        </g>
+      </g>
+
+      <!-- flower 7 : peach, outer far-right stem, delay 1.8s -->
+      <g transform="translate(362,270)">
+        <g class="flower-inner" style="animation-delay:1.8s">
+          <g fill="#f7c59f">
+            <ellipse cx="0" cy="-15" rx="10" ry="21" transform="rotate(0)"/>
+            <ellipse cx="0" cy="-15" rx="10" ry="21" transform="rotate(45)"/>
+            <ellipse cx="0" cy="-15" rx="10" ry="21" transform="rotate(90)"/>
+            <ellipse cx="0" cy="-15" rx="10" ry="21" transform="rotate(135)"/>
+            <ellipse cx="0" cy="-15" rx="10" ry="21" transform="rotate(180)"/>
+            <ellipse cx="0" cy="-15" rx="10" ry="21" transform="rotate(225)"/>
+            <ellipse cx="0" cy="-15" rx="10" ry="21" transform="rotate(270)"/>
+            <ellipse cx="0" cy="-15" rx="10" ry="21" transform="rotate(315)"/>
+          </g>
+          <circle r="9" fill="#e9b64a"/>
+        </g>
+      </g>
+
+      <!-- flower 8 : pale yellow, upper inner-left stem, delay 1.9s -->
+      <g transform="translate(225,155)">
+        <g class="flower-inner" style="animation-delay:1.9s">
+          <g fill="#fbe38a">
+            <ellipse cx="0" cy="-21" rx="16" ry="30" transform="rotate(0)"/>
+            <ellipse cx="0" cy="-21" rx="16" ry="30" transform="rotate(60)"/>
+            <ellipse cx="0" cy="-21" rx="16" ry="30" transform="rotate(120)"/>
+            <ellipse cx="0" cy="-21" rx="16" ry="30" transform="rotate(180)"/>
+            <ellipse cx="0" cy="-21" rx="16" ry="30" transform="rotate(240)"/>
+            <ellipse cx="0" cy="-21" rx="16" ry="30" transform="rotate(300)"/>
+          </g>
+          <circle r="14" fill="#f2a6b3"/>
+        </g>
+      </g>
+
+      <!-- flower 9 : soft lavender-blue, upper inner-right stem, delay 1.95s -->
+      <g transform="translate(277,155)">
+        <g class="flower-inner" style="animation-delay:1.95s">
+          <g fill="#a9c6e8">
+            <ellipse cx="0" cy="-21" rx="16" ry="30" transform="rotate(0)"/>
+            <ellipse cx="0" cy="-21" rx="16" ry="30" transform="rotate(60)"/>
+            <ellipse cx="0" cy="-21" rx="16" ry="30" transform="rotate(120)"/>
+            <ellipse cx="0" cy="-21" rx="16" ry="30" transform="rotate(180)"/>
+            <ellipse cx="0" cy="-21" rx="16" ry="30" transform="rotate(240)"/>
+            <ellipse cx="0" cy="-21" rx="16" ry="30" transform="rotate(300)"/>
+          </g>
+          <circle r="14" fill="#fff3d9"/>
+        </g>
+      </g>
+
+      <!-- flower 10 : blush pink, tall center-back stem, delay 2.0s -->
+      <g transform="translate(250,130)">
+        <g class="flower-inner" style="animation-delay:2s">
+          <g fill="#f2a6b3">
+            <ellipse cx="0" cy="-19" rx="13" ry="26" transform="rotate(0)"/>
+            <ellipse cx="0" cy="-19" rx="13" ry="26" transform="rotate(60)"/>
+            <ellipse cx="0" cy="-19" rx="13" ry="26" transform="rotate(120)"/>
+            <ellipse cx="0" cy="-19" rx="13" ry="26" transform="rotate(180)"/>
+            <ellipse cx="0" cy="-19" rx="13" ry="26" transform="rotate(240)"/>
+            <ellipse cx="0" cy="-19" rx="13" ry="26" transform="rotate(300)"/>
+          </g>
+          <circle r="12" fill="#e9b64a"/>
+        </g>
+      </g>
+
+      <!-- flower 11 : deep pink, upper far-left stem, delay 2.05s -->
+      <g transform="translate(160,205)">
+        <g class="flower-inner" style="animation-delay:2.05s">
+          <g fill="#e8748a">
+            <ellipse cx="0" cy="-17" rx="12" ry="25" transform="rotate(0)"/>
+            <ellipse cx="0" cy="-17" rx="12" ry="25" transform="rotate(60)"/>
+            <ellipse cx="0" cy="-17" rx="12" ry="25" transform="rotate(120)"/>
+            <ellipse cx="0" cy="-17" rx="12" ry="25" transform="rotate(180)"/>
+            <ellipse cx="0" cy="-17" rx="12" ry="25" transform="rotate(240)"/>
+            <ellipse cx="0" cy="-17" rx="12" ry="25" transform="rotate(300)"/>
+          </g>
+          <circle r="10" fill="#fff3d9"/>
+        </g>
+      </g>
+
+      <!-- flower 12 : lilac, upper far-right stem, delay 2.1s -->
+      <g transform="translate(340,205)">
+        <g class="flower-inner" style="animation-delay:2.1s">
+          <g fill="#c9a0dc">
+            <ellipse cx="0" cy="-17" rx="12" ry="25" transform="rotate(0)"/>
+            <ellipse cx="0" cy="-17" rx="12" ry="25" transform="rotate(60)"/>
+            <ellipse cx="0" cy="-17" rx="12" ry="25" transform="rotate(120)"/>
+            <ellipse cx="0" cy="-17" rx="12" ry="25" transform="rotate(180)"/>
+            <ellipse cx="0" cy="-17" rx="12" ry="25" transform="rotate(240)"/>
+            <ellipse cx="0" cy="-17" rx="12" ry="25" transform="rotate(300)"/>
+          </g>
+          <circle r="10" fill="#fff3d9"/>
+        </g>
+      </g>
+
+      <!-- flower 13 : coral daisy, center-mid tucked stem, delay 1.55s -->
+      <g transform="translate(250,225)">
+        <g class="flower-inner" style="animation-delay:1.55s">
+          <g fill="#f4b183">
+            <ellipse cx="0" cy="-13" rx="9" ry="18" transform="rotate(0)"/>
+            <ellipse cx="0" cy="-13" rx="9" ry="18" transform="rotate(45)"/>
+            <ellipse cx="0" cy="-13" rx="9" ry="18" transform="rotate(90)"/>
+            <ellipse cx="0" cy="-13" rx="9" ry="18" transform="rotate(135)"/>
+            <ellipse cx="0" cy="-13" rx="9" ry="18" transform="rotate(180)"/>
+            <ellipse cx="0" cy="-13" rx="9" ry="18" transform="rotate(225)"/>
+            <ellipse cx="0" cy="-13" rx="9" ry="18" transform="rotate(270)"/>
+            <ellipse cx="0" cy="-13" rx="9" ry="18" transform="rotate(315)"/>
+          </g>
+          <circle r="9" fill="#e9b64a"/>
+        </g>
+      </g>
+
+      <!-- flower 14 : pale gold, upper inner-left-2 stem, delay 2.15s -->
+      <g transform="translate(190,175)">
+        <g class="flower-inner" style="animation-delay:2.15s">
+          <g fill="#fbe38a">
+            <ellipse cx="0" cy="-16" rx="10" ry="23" transform="rotate(0)"/>
+            <ellipse cx="0" cy="-16" rx="10" ry="23" transform="rotate(60)"/>
+            <ellipse cx="0" cy="-16" rx="10" ry="23" transform="rotate(120)"/>
+            <ellipse cx="0" cy="-16" rx="10" ry="23" transform="rotate(180)"/>
+            <ellipse cx="0" cy="-16" rx="10" ry="23" transform="rotate(240)"/>
+            <ellipse cx="0" cy="-16" rx="10" ry="23" transform="rotate(300)"/>
+          </g>
+          <circle r="9" fill="#f2a6b3"/>
+        </g>
+      </g>
+
+      <!-- flower 15 : periwinkle, upper inner-right-2 stem, delay 2.2s -->
+      <g transform="translate(310,175)">
+        <g class="flower-inner" style="animation-delay:2.2s">
+          <g fill="#a9c6e8">
+            <ellipse cx="0" cy="-16" rx="10" ry="23" transform="rotate(0)"/>
+            <ellipse cx="0" cy="-16" rx="10" ry="23" transform="rotate(60)"/>
+            <ellipse cx="0" cy="-16" rx="10" ry="23" transform="rotate(120)"/>
+            <ellipse cx="0" cy="-16" rx="10" ry="23" transform="rotate(180)"/>
+            <ellipse cx="0" cy="-16" rx="10" ry="23" transform="rotate(240)"/>
+            <ellipse cx="0" cy="-16" rx="10" ry="23" transform="rotate(300)"/>
+          </g>
+          <circle r="9" fill="#fff3d9"/>
+        </g>
+      </g>
+
+      <!-- flower 16 : the big showstopper, tallest center-back stem, delay 2.25s -->
+      <g transform="translate(250,100)">
+        <g class="flower-inner" style="animation-delay:2.25s">
+          <g fill="#e8748a">
+            <ellipse cx="0" cy="-27" rx="19" ry="37" transform="rotate(0)"/>
+            <ellipse cx="0" cy="-27" rx="19" ry="37" transform="rotate(60)"/>
+            <ellipse cx="0" cy="-27" rx="19" ry="37" transform="rotate(120)"/>
+            <ellipse cx="0" cy="-27" rx="19" ry="37" transform="rotate(180)"/>
+            <ellipse cx="0" cy="-27" rx="19" ry="37" transform="rotate(240)"/>
+            <ellipse cx="0" cy="-27" rx="19" ry="37" transform="rotate(300)"/>
+          </g>
+          <circle r="18" fill="#fff3d9"/>
+        </g>
+      </g>
+
+      <!-- flower 17 : coral daisy, left-center gap stem, delay 2.3s -->
+      <g transform="translate(215,255)">
+        <g class="flower-inner" style="animation-delay:2.3s">
+          <g fill="#f4b183">
+            <ellipse cx="0" cy="-12" rx="8" ry="17" transform="rotate(0)"/>
+            <ellipse cx="0" cy="-12" rx="8" ry="17" transform="rotate(45)"/>
+            <ellipse cx="0" cy="-12" rx="8" ry="17" transform="rotate(90)"/>
+            <ellipse cx="0" cy="-12" rx="8" ry="17" transform="rotate(135)"/>
+            <ellipse cx="0" cy="-12" rx="8" ry="17" transform="rotate(180)"/>
+            <ellipse cx="0" cy="-12" rx="8" ry="17" transform="rotate(225)"/>
+            <ellipse cx="0" cy="-12" rx="8" ry="17" transform="rotate(270)"/>
+            <ellipse cx="0" cy="-12" rx="8" ry="17" transform="rotate(315)"/>
+          </g>
+          <circle r="8" fill="#e9b64a"/>
+        </g>
+      </g>
+
+      <!-- flower 18 : pale gold daisy, right-center gap stem, delay 2.35s -->
+      <g transform="translate(285,255)">
+        <g class="flower-inner" style="animation-delay:2.35s">
+          <g fill="#fbe38a">
+            <ellipse cx="0" cy="-12" rx="8" ry="17" transform="rotate(0)"/>
+            <ellipse cx="0" cy="-12" rx="8" ry="17" transform="rotate(45)"/>
+            <ellipse cx="0" cy="-12" rx="8" ry="17" transform="rotate(90)"/>
+            <ellipse cx="0" cy="-12" rx="8" ry="17" transform="rotate(135)"/>
+            <ellipse cx="0" cy="-12" rx="8" ry="17" transform="rotate(180)"/>
+            <ellipse cx="0" cy="-12" rx="8" ry="17" transform="rotate(225)"/>
+            <ellipse cx="0" cy="-12" rx="8" ry="17" transform="rotate(270)"/>
+            <ellipse cx="0" cy="-12" rx="8" ry="17" transform="rotate(315)"/>
+          </g>
+          <circle r="8" fill="#f2a6b3"/>
+        </g>
+      </g>
+
+      <!-- flower 19 : magenta, far outer left stem, delay 2.4s -->
+      <g transform="translate(130,250)">
+        <g class="flower-inner" style="animation-delay:2.4s">
+          <g fill="#d46a9e">
+            <ellipse cx="0" cy="-16" rx="11" ry="23" transform="rotate(0)"/>
+            <ellipse cx="0" cy="-16" rx="11" ry="23" transform="rotate(60)"/>
+            <ellipse cx="0" cy="-16" rx="11" ry="23" transform="rotate(120)"/>
+            <ellipse cx="0" cy="-16" rx="11" ry="23" transform="rotate(180)"/>
+            <ellipse cx="0" cy="-16" rx="11" ry="23" transform="rotate(240)"/>
+            <ellipse cx="0" cy="-16" rx="11" ry="23" transform="rotate(300)"/>
+          </g>
+          <circle r="10" fill="#fff3d9"/>
+        </g>
+      </g>
+
+      <!-- flower 20 : peach, far outer right stem, delay 2.45s -->
+      <g transform="translate(370,250)">
+        <g class="flower-inner" style="animation-delay:2.45s">
+          <g fill="#f7c59f">
+            <ellipse cx="0" cy="-16" rx="11" ry="23" transform="rotate(0)"/>
+            <ellipse cx="0" cy="-16" rx="11" ry="23" transform="rotate(60)"/>
+            <ellipse cx="0" cy="-16" rx="11" ry="23" transform="rotate(120)"/>
+            <ellipse cx="0" cy="-16" rx="11" ry="23" transform="rotate(180)"/>
+            <ellipse cx="0" cy="-16" rx="11" ry="23" transform="rotate(240)"/>
+            <ellipse cx="0" cy="-16" rx="11" ry="23" transform="rotate(300)"/>
+          </g>
+          <circle r="10" fill="#e9b64a"/>
+        </g>
+      </g>
+
+    </svg>
+  </div>
+
+  <!-- Edit the note below to personalize it -->
+  <div class="letter" id="letter">
+    <div class="letter-card">
+      <p class="letter-heading">A little letter for you, y/n</p>
+          Bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet bayet. Wahahahahahahaah 😏🌷🎆
+          Oh may pa fireworks pa lagi 
+      </p>
+      <p class="letter-sign">with love, Jubby</p>
+    </div>
+  </div>
+
+  <button class="restart" id="restartBtn" type="button">start over</button>
+
+</div>
+
+<script>
+  const canvas = document.getElementById('fireworks');
+  const ctx = canvas.getContext('2d');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function resizeCanvas(){
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  const FIREWORK_COLORS = ['#f2a6b3','#e8748a','#c9a0dc','#fbe38a','#a9c6e8','#f7c59f','#d9a441'];
+  let rockets = [];
+  let sparks = [];
+  let fireworksTimers = [];
+  let fireworksRunning = false;
+
+  class Rocket{
+    constructor(x, targetY){
+      this.x = x;
+      this.y = canvas.height + 10;
+      this.targetY = targetY;
+      this.vy = -(9 + Math.random() * 3);
+      this.color = FIREWORK_COLORS[Math.floor(Math.random() * FIREWORK_COLORS.length)];
+      this.trail = [];
+    }
+    update(){
+      this.trail.push({x:this.x, y:this.y});
+      if (this.trail.length > 10) this.trail.shift();
+      this.y += this.vy;
+      return this.y <= this.targetY;
+    }
+    draw(){
+      ctx.strokeStyle = this.color;
+      ctx.lineWidth = 3.5;
+      ctx.lineCap = 'round';
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = this.color;
+      ctx.beginPath();
+      this.trail.forEach((p, i) => {
+        ctx.globalAlpha = i / this.trail.length;
+        if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+      });
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  class Spark{
+    constructor(x, y, color){
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 3 + Math.random() * 6.5;
+      this.x = x; this.y = y;
+      this.vx = Math.cos(angle) * speed;
+      this.vy = Math.sin(angle) * speed;
+      this.color = color;
+      this.alpha = 1;
+      this.size = 3 + Math.random() * 3.5;
+    }
+    update(){
+      this.vy += 0.05;
+      this.vx *= 0.98;
+      this.vy *= 0.98;
+      this.x += this.vx;
+      this.y += this.vy;
+      this.alpha -= 0.011;
+      return this.alpha > 0;
+    }
+    draw(){
+      ctx.globalAlpha = Math.max(this.alpha, 0);
+      ctx.fillStyle = this.color;
+      ctx.shadowBlur = 18;
+      ctx.shadowColor = this.color;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function explode(x, y){
+    const color = FIREWORK_COLORS[Math.floor(Math.random() * FIREWORK_COLORS.length)];
+    for (let i = 0; i < 110; i++){
+      sparks.push(new Spark(x, y, color));
+    }
+  }
+
+  function launchFirework(){
+    if (reduceMotion) return;
+    const x = window.innerWidth * (0.1 + Math.random() * 0.8);
+    const targetY = window.innerHeight * (0.12 + Math.random() * 0.3);
+    rockets.push(new Rocket(x, targetY));
+    startFireworksLoop();
+  }
+
+  function startFireworksLoop(){
+    if (fireworksRunning) return;
+    fireworksRunning = true;
+    requestAnimationFrame(fireworksTick);
+  }
+
+  function fireworksTick(){
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    rockets = rockets.filter(r => {
+      const arrived = r.update();
+      r.draw();
+      if (arrived) explode(r.x, r.y);
+      return !arrived;
+    });
+
+    sparks = sparks.filter(s => {
+      const alive = s.update();
+      if (alive) s.draw();
+      return alive;
+    });
+
+    if (rockets.length || sparks.length){
+      requestAnimationFrame(fireworksTick);
+    } else {
+      fireworksRunning = false;
+    }
+  }
+
+  function startFireworksShow(){
+    if (reduceMotion) return;
+    // a bold celebratory salvo timed alongside the blooms
+    [150, 150, 600, 1100, 1100, 1650, 2200, 2200, 2800].forEach(delay => {
+      fireworksTimers.push(setTimeout(launchFirework, delay));
+    });
+  }
+
+  function startFireworksAmbience(){
+    if (reduceMotion) return;
+    const scheduleNext = () => {
+      launchFirework();
+      if (Math.random() < 0.4) fireworksTimers.push(setTimeout(launchFirework, 250));
+      fireworksTimers.push(setTimeout(scheduleNext, 1500 + Math.random() * 1400));
+    };
+    fireworksTimers.push(setTimeout(scheduleNext, 1500));
+  }
+
+  function stopFireworks(){
+    fireworksTimers.forEach(clearTimeout);
+    fireworksTimers = [];
+    rockets = [];
+    sparks = [];
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  const scene = document.getElementById('scene');
+  const envelopeBtn = document.getElementById('envelopeBtn');
+  const restartBtn = document.getElementById('restartBtn');
+  const ambient = document.getElementById('ambient');
+
+  // total time until the sequence has fully settled (matches CSS timings)
+  const SETTLE_DELAY = 3900;
+  const PETAL_TYPES = ['🌸','💮','🌷','🌺','🌼','✿'];
+  let settleTimer = null;
+  let showerInterval = null;
+
+  function openScene(){
+    if (scene.classList.contains('open')) return;
+    scene.classList.add('open');
+    envelopeBtn.setAttribute('aria-expanded', 'true');
+
+    // an immediate, denser burst timed with the reveal itself
+    spawnPetals(22, { burst: true });
+    startFireworksShow();
+
+    clearTimeout(settleTimer);
+    settleTimer = setTimeout(() => {
+      scene.classList.add('settled');
+      // keep a gentle, continuous shower going afterwards
+      clearInterval(showerInterval);
+      showerInterval = setInterval(() => spawnPetals(3), 700);
+      startFireworksAmbience();
+    }, SETTLE_DELAY);
+  }
+
+  function resetScene(){
+    clearTimeout(settleTimer);
+    clearInterval(showerInterval);
+    stopFireworks();
+    scene.classList.remove('open', 'settled');
+    ambient.innerHTML = '';
+    // force reflow so animations can replay from the start
+    void scene.offsetWidth;
+  }
+
+  envelopeBtn.addEventListener('click', openScene);
+  envelopeBtn.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      openScene();
+    }
+  });
+
+  restartBtn.addEventListener('click', resetScene);
+
+  function spawnPetals(count, opts = {}){
+    for (let i = 0; i < count; i++){
+      const span = document.createElement('span');
+      span.textContent = PETAL_TYPES[Math.floor(Math.random() * PETAL_TYPES.length)];
+      span.style.left = Math.random() * 100 + 'vw';
+      const duration = opts.burst ? (5 + Math.random() * 4) : (9 + Math.random() * 7);
+      span.style.animationDuration = duration + 's';
+      span.style.animationDelay = (opts.burst ? Math.random() * 1.2 : Math.random() * 2) + 's';
+      span.style.fontSize = (12 + Math.random() * 12) + 'px';
+      span.style.setProperty('--drift-x', (Math.random() * 60 - 30) + 'px');
+      span.addEventListener('animationend', () => span.remove());
+      ambient.appendChild(span);
+    }
+  }
+</script>
+
+</body>
+</html>
